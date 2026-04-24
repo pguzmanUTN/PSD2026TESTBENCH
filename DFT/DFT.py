@@ -24,11 +24,11 @@ def  mi_funcion ( vmax = 1, dc = 0, ff = 1, ph = 0, nn = 100, fs = 50, type = 's
     
     return tt, xx
 
-N=2048
-fs   = N #Resolucion espectral normalizada
+N=16384
+fs   = 1e3 
 n = np.arange(start = 0, step = 1/fs, stop = N/fs)
-ff = 100
-t, x = mi_funcion( vmax = 1, dc = 0, ff = ff, ph = np.pi/4, nn = N, fs = fs, type = 'square', duty = 0.5)
+ff = 50
+t, x = mi_funcion( vmax = 1, dc = 0, ff = ff, ph = np.pi/4, nn = N, fs = fs, type = 'square', duty = 0.25)
 plt.plot(t,x)
 plt.grid()
 
@@ -64,52 +64,50 @@ timefft = fin - inicio
 
 print(f"Tiempo de ejecución FFT: {fin - inicio:.9f} segundos")
 
-print(f"Ganancia de Procecsamiento: {timedft/timefft:.9f}")
-
+#print(f"Ganancia de Procecsamiento: {timedft/timefft:.9f}")
+f  = np.linspace(0, fs, N)
 
 plt.figure()
 plt.title("Modulo")
-plt.plot(np.abs(Xk)/len(Xk), label= "DFT" , marker = 'X')
-plt.plot(np.abs(Xft)/len(Xft), label= "FFT", marker = 'o')
-plt.xlim(0, N//2)
+plt.plot(f , np.abs(Xk)/len(Xk), label= "DFT" , marker = 'X')
+plt.plot(f, np.abs(Xft)/len(Xft), label= "FFT", marker = 'o')
+plt.xlim(0, fs/2)
 plt.grid()
 plt.legend()
 
-th = 0.10
+th = 0.005
 thv = ((np.abs(Xk)/len(Xk)) > th).astype(int)
-print(thv)
 plt.figure()
 plt.title("Fase")
-plt.plot(np.angle(Xk,deg=True)*thv, label= "DFT" )
-plt.plot(np.angle(Xft,deg=True)*thv, label= "FFT")
+plt.plot(f,np.angle(Xk,deg=True)*thv, label= "DFT", marker = 'X' )
+plt.plot(f,np.angle(Xft,deg=True)*thv, label= "FFT", marker = 'o')
+plt.xlim(0, fs/2)
 plt.grid()
 plt.legend()
 phase = np.angle(Xk,deg=True)
 
-i = np.argmax(np.abs(Xk))
-print(phase[i])
 
 plt.figure()
 plt.title("Modulo")
-plt.plot(np.abs(Xk)/len(Xk), label= "DFT" )
-plt.plot(np.abs(Xft)/len(Xft), label= "FFT")
-plt.xlim(0, N//2)
+plt.plot(f,np.abs(Xk)/len(Xk), label= "DFT", marker = 'X')
+plt.plot(f,np.abs(Xft)/len(Xft), label= "FFT", marker = 'o')
+plt.xlim(0, fs/2)
 plt.grid()
 plt.legend()
 
 plt.figure()
 plt.title("Real")
-plt.plot(np.real(Xk)/len(Xk), label= "DFT" )
-plt.plot(np.real(Xft)/len(Xft), label= "FFT")
-plt.xlim(0, N//2)
+plt.plot(f,np.real(Xk)/len(Xk), label= "DFT" , marker = 'X')
+plt.plot(f,np.real(Xft)/len(Xft), label= "FFT", marker = 'o')
+plt.xlim(0, fs/2)
 plt.grid()
 plt.legend()
 
 plt.figure()
 plt.title("Imaginario")
-plt.plot(np.imag(Xk)/len(Xk), label= "DFT" )
-plt.plot(np.imag(Xft)/len(Xft), label= "FFT")
-plt.xlim(0, N//2)
+plt.plot(f,np.imag(Xk)/len(Xk), label= "DFT" , marker = 'o')
+plt.plot(f,np.imag(Xft)/len(Xft), label= "FFT", marker = 'o')
+plt.xlim(0, fs/2)
 plt.grid()
 plt.legend()
 
