@@ -74,39 +74,45 @@ t_hb2 = np.arange(len(hb_2)) / fs
 ripple = 0.5 # dB
 atenuacion = 20 # dB
 
-ws1 = .01 #Hz
+ws1 = .001 #Hz
 wp1 = 1 #Hz
 wp2 = 35.0 #Hz
-ws2 = 50 #Hz
+ws2 = 49 #Hz
 
 
 
-sos_iir_cauer = sp.iirdesign(wp=[wp1-0.1,wp2+1], ws=[ws1,ws2], gpass=ripple, gstop=atenuacion, output='sos', analog=False, ftype='ellip', fs = fs)
+sos_iir_cheby2 = sp.iirdesign(wp=[wp1-0.1,wp2+1], ws=[ws1,ws2], gpass=ripple, gstop=atenuacion, output='sos', analog=False, ftype='cheby2', fs = fs)
+sos_iir_butter = sp.iirdesign(wp=[wp1-0.1,wp2+1], ws=[ws1,ws2], gpass=ripple, gstop=atenuacion, output='sos', analog=False, ftype='butter', fs = fs)
 
 w_rad = np.concatenate( [ np.logspace(start = -2, stop = np.log10(2), num = 250 ),
                        np.linspace(start = 2.1, stop = 34, num = 250 ),
                        np.logspace(start = np.log10(34.1), stop = np.log10(52), num = 250 ),
                        np.linspace(start = 52.1, stop = fs/2, num = 250 )] )
 
-w_rad, h_iir = sp.freqz_sos(sos_iir_cauer, worN=w_rad, fs = fs)
+w_rad, h_iir_cheby2 = sp.freqz_sos(sos_iir_cheby2, worN=w_rad, fs = fs)
+w_rad, h_iir_butter = sp.freqz_sos(sos_iir_butter, worN=w_rad, fs = fs)
 
 plt.figure()
 
-plt.plot(w_rad, 20*np.log10(np.abs(h_iir)+1e-12), label = 'IIR' )
+plt.plot(w_rad, 20*np.log10(np.abs(h_iir_cheby2)+1e-12), label = 'IIR Cheby 2' )
+plt.plot(w_rad, 20*np.log10(np.abs(h_iir_butter)+1e-12), label = 'IIR Butter' )
 
-plt.title('IIR ejemplo')
+plt.title('Filtros')
 plt.xlabel('Frecuencia [Hz]')
 plt.ylabel('Módulo [dB]')
 plt.grid()
-plt.axis([0, 60, -60, 5 ]);
+plt.axis([0, 90, -80, 5 ]);
 
 axes_hdl = plt.gca()
 
 plot_plantilla(filter_type = 'bandpass', fpass = (wp1, wp2), fstop =  (ws1, ws2), ripple = ripple, attenuation = atenuacion, fs = fs)
 _ = axes_hdl.legend()
-print(sos_iir_cauer.shape[0]*2)
 
-w, h = sp.freqz_sos(sos_iir_cauer, worN=w_rad, fs=fs)
+plt.show()
+print(f"Orden del Filtro IIR Cheby 2: {sos_iir_cheby2.shape[0]*2}")
+print(f"Orden del Filtro IIR Butter : {sos_iir_butter.shape[0]*2}")
+
+
 
 # -------------------------------------------------
 # Modulo y fase
@@ -180,37 +186,9 @@ w, h = sp.freqz_sos(sos_iir_cauer, worN=w_rad, fs=fs)
 # plt.show() 
 
 
-ECG_F_CAUER = sp.sosfiltfilt(sos_iir_cauer, ecg_one_lead)
+ECG_F_cheby2 = sp.sosfiltfilt(sos_iir_cheby2, ecg_one_lead)
+ECG_F_butter = sp.sosfiltfilt(sos_iir_butter, ecg_one_lead)
 
-
-fig, ax = plt.subplots(figsize=(12, 4))
-
-# Fondo oscuro estilo monitor ECG
-ax.set_facecolor('#0d1117')
-fig.patch.set_facecolor('#0d1117')
-
-t_slice = t_ecg[5000:12000]
-
-ax.plot(t_slice, ecg_one_lead[5000:12000],
-        color='#00e5ff', linewidth=0.9, alpha=0.5, label='ECG Original')
-
-ax.plot(t_slice, ECG_F_CAUER[5000:12000],
-        color='#ff4b4b', linewidth=1.3, label='ECG Filtrado (Cauer)')
-
-ax.set_title('ECG — Original vs Filtrado Cauer', color='white', fontsize=13, pad=12)
-ax.set_xlabel('Tiempo [s]', color='#aaaaaa', fontsize=11)
-ax.set_ylabel('Amplitud', color='#aaaaaa', fontsize=11)
-
-ax.tick_params(colors='#aaaaaa')
-for spine in ax.spines.values():
-    spine.set_edgecolor('#2a2a2a')
-
-ax.grid(True, color='#1e1e1e', linewidth=0.6)
-ax.legend(framealpha=0.3, labelcolor='white',
-          facecolor='#111111', edgecolor='#333333', fontsize=10)
-
-plt.tight_layout()
-plt.show()
 
 
 
@@ -218,30 +196,7 @@ plt.show()
 #%% Regiones de interés con ruido #
 ###################################
  
-regs_interes = (
-        [4000, 5500], # muestras
-        [10e3, 11e3], # muestras
-        )
- 
-for ii in regs_interes:
-   
-    # intervalo limitado de 0 a cant_muestras
-    zoom_region = np.arange(np.max([0, ii[0]]), np.min([N, ii[1]]), dtype='uint')
-   
-    plt.figure(1)
-    plt.plot(zoom_region, ecg_one_lead[zoom_region], label='ECG', linewidth=2)
-    #plt.plot(zoom_region, ECG_f_butt[zoom_region], label='Butterworth')
-    #plt.plot(zoom_region, ECG_f_win[zoom_region + demora], label='FIR Window')
-   
-    plt.title('ECG filtering example from ' + str(ii[0]) + ' to ' + str(ii[1]) )
-    plt.ylabel('Adimensional')
-    plt.xlabel('Muestras (#)')
-   
-    axes_hdl = plt.gca()
-    axes_hdl.legend()
-    axes_hdl.set_yticks(())
-           
-    plt.show()
+
  
 ###################################
 #%% Regiones de interés sin ruido #
@@ -260,13 +215,14 @@ for ii in regs_interes:
    
     plt.figure()
     plt.plot(zoom_region, ecg_one_lead[zoom_region], label='ECG', linewidth=2)
-    plt.plot(zoom_region, ECG_F_CAUER[zoom_region], label='Cauer')
+    plt.plot(zoom_region, ECG_F_cheby2[zoom_region], label='cheby2')
+    plt.plot(zoom_region, ECG_F_butter[zoom_region], label='butter')
     #plt.plot(zoom_region, ECG_f_win[zoom_region + demora], label='FIR Window')
    
-    plt.title('ECG filtering example from ' + str(ii[0]) + ' to ' + str(ii[1]) )
+    plt.title('ECG filtering with IIR example from ' + str(ii[0]) + ' to ' + str(ii[1]) )
     plt.ylabel('Adimensional')
     plt.xlabel('Muestras (#)')
-   
+    plt.grid()
     axes_hdl = plt.gca()
     axes_hdl.legend()
     axes_hdl.set_yticks(())
